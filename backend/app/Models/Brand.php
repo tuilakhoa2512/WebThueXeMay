@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Brands extends Model
+class Brand extends Model
 {
     protected $table = 'brands';
     public $timestamps = false;
@@ -13,6 +13,6 @@ class Brands extends Model
 
     public function vehicles()
     {
-        return $this->hasMany(Vehicles::class);
+        return $this->hasMany(Vehicle::class);
     }
 }

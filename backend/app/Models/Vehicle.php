@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Vehicles extends Model
+class Vehicle extends Model
 {
     protected $table = 'vehicles';
 
@@ -20,12 +20,12 @@ class Vehicles extends Model
 
     public function category()
     {
-        return $this->belongsTo(Categories::class);
+        return $this->belongsTo(Category::class);
     }
 
     public function brand()
     {
-        return $this->belongsTo(Brands::class);
+        return $this->belongsTo(Brand::class);
     }
 
     public function images()
@@ -35,11 +35,11 @@ class Vehicles extends Model
 
     public function rentals()
     {
-        return $this->hasMany(Rentals::class);
+        return $this->hasMany(Rental::class);
     }
 
     public function favorites()
     {
-        return $this->hasMany(Favorites::class);
+        return $this->hasMany(Favorite::class);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Reviews extends Model
+class Review extends Model
 {
     protected $table = 'reviews';
     public $timestamps = false;
@@ -19,7 +19,7 @@ class Reviews extends Model
 
     public function rental()
     {
-        return $this->belongsTo(Rentals::class);
+        return $this->belongsTo(Rental::class);
     }
 
     public function user()

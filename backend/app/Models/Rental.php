@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Rentals extends Model
+class Rental extends Model
 {
     protected $table = 'rentals';
 
@@ -24,16 +24,16 @@ class Rentals extends Model
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicles::class);
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function review()
     {
-        return $this->hasOne(Reviews::class);
+        return $this->hasOne(Review::class);
     }
 
     public function payment()
     {
-        return $this->hasOne(Payments::class);
+        return $this->hasOne(Payment::class);
     }
 }

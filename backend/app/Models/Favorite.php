@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Favorites extends Model
+class Favorite extends Model
 {
     protected $table = 'favorites';
     public $timestamps = false;
@@ -21,6 +21,6 @@ class Favorites extends Model
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicles::class);
+        return $this->belongsTo(Vehicle::class);
     }
 }

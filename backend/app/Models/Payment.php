@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Payments extends Model
+class Payment extends Model
 {
     protected $table = 'payments';
     public $timestamps = false;
@@ -18,6 +18,6 @@ class Payments extends Model
 
     public function rental()
     {
-        return $this->belongsTo(Rentals::class);
+        return $this->belongsTo(Rental::class);
     }
 }

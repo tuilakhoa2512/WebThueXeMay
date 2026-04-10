@@ -32,21 +32,21 @@ class User extends Authenticatable
 
     public function rentals()
     {
-        return $this->hasMany(Rentals::class);
+        return $this->hasMany(Rental::class);
     }
 
     public function reviews()
     {
-        return $this->hasMany(Reviews::class);
+        return $this->hasMany(Review::class);
     }
 
     public function favorites()
     {
-        return $this->hasMany(Favorites::class);
+        return $this->hasMany(Favorite::class);
     }
 
     public function notifications()
     {
-        return $this->hasMany(Notifications::class);
+        return $this->hasMany(Notification::class);
     }
 }
