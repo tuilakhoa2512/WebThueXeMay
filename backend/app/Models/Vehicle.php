@@ -32,7 +32,12 @@ class Vehicle extends Model
     {
         return $this->hasMany(VehicleImage::class);
     }
-
+    // ảnh chính
+    public function primaryImage()
+    {
+        return $this->hasOne(VehicleImage::class)
+                    ->where('is_primary', 1);
+    }
     public function rentals()
     {
         return $this->hasMany(Rental::class);
