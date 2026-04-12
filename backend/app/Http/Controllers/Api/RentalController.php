@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Rental;
@@ -15,49 +15,76 @@ class RentalController extends Controller
     {
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date|after_or_equal:now',
             'end_date' => 'required|date|after:start_date',
         ]);
-
+    
         $user = $request->user();
-
+    
+        // lấy vehicle
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+    
+        // check xe có khả dụng không
+        if ($vehicle->status != 0) {
+            return response()->json([
+                'message' => 'Xe hiện không khả dụng'
+            ], 400);
+        }
+    
         // Check trùng lịch
         $isConflict = Rental::where('vehicle_id', $request->vehicle_id)
-            ->whereIn('status', [0, 1, 2]) // pending, confirmed, renting
+            ->whereIn('status', [0, 1, 2])
             ->where(function ($query) use ($request) {
                 $query->where('start_date', '<=', $request->end_date)
                       ->where('end_date', '>=', $request->start_date);
             })
             ->exists();
-
+    
         if ($isConflict) {
             return response()->json([
                 'message' => 'Xe đã có người đặt trong thời gian này'
             ], 400);
         }
-
-        $vehicle = Vehicle::findOrFail($request->vehicle_id);
-
-        // Tính số ngày
-        $days = Carbon::parse($request->start_date)
-            ->diffInDays(Carbon::parse($request->end_date)) + 1;
-
-        $total = $days * $vehicle->price_per_day;
-
-        // Tạo đơn thuê
-        $rental = Rental::create([
-            'user_id' => $user->id,
-            'vehicle_id' => $request->vehicle_id,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'status' => 0,
-            'total_price' => $total
-        ]);
-
-        return response()->json([
-            'message' => 'Đặt xe thành công',
-            'data' => $rental
-        ]);
+    
+        DB::beginTransaction();
+    
+        try {
+            // tính số ngày (>= 1)
+            $start = Carbon::parse($request->start_date);
+            $end = Carbon::parse($request->end_date);
+    
+            $days = max(1, $start->diffInDays($end) + 1);
+    
+            $total = $days * $vehicle->price_per_day;
+    
+            // tạo rental
+            $rental = Rental::create([
+                'user_id' => $user->id,
+                'vehicle_id' => $request->vehicle_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'status' => 0,
+                'total_price' => $total
+            ]);
+    
+            DB::commit();
+    
+            // load lại sau khi đã thêm đơn
+            $rental->load(['vehicle']);
+    
+            return response()->json([
+                'message' => 'Đặt xe thành công',
+                'data' => $rental
+            ]);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+    
+            return response()->json([
+                'message' => 'Lỗi khi đặt xe',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     //User xem đơn của mình
@@ -74,10 +101,16 @@ class RentalController extends Controller
     }
 
     //Xem chi tiết
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        $user = $request->user();
+
         $rental = Rental::with(['vehicle', 'user'])
             ->findOrFail($id);
+
+        if ($rental->user_id != $user->id && $user->role_id != 1) {
+            return response()->json(['message' => 'Không có quyền'], 403);
+        }
 
         return response()->json($rental);
     }
@@ -89,7 +122,7 @@ class RentalController extends Controller
 
         $rental = Rental::findOrFail($id);
 
-        // check quyền
+        // check quyền (chỉ chủ đơn)
         if ($rental->user_id !== $user->id) {
             return response()->json([
                 'message' => 'Không có quyền'
@@ -97,7 +130,7 @@ class RentalController extends Controller
         }
 
         // chỉ hủy khi pending
-        if ($rental->status != 0) {
+        if ($rental->status !== 'pending') {
             return response()->json([
                 'message' => 'Chỉ được hủy khi đang chờ xác nhận'
             ], 400);
@@ -108,13 +141,19 @@ class RentalController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Đã hủy đơn'
+            'message' => 'Bạn đã hủy đơn'
         ]);
     }
 
     //Admin xem tất cả
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+
+        if ($user->role_id != 1) {
+            return response()->json(['message' => 'Không có quyền'], 403);
+        }
+
         $rentals = Rental::with(['user', 'vehicle'])
             ->latest()
             ->get();
@@ -125,9 +164,13 @@ class RentalController extends Controller
     //Admin xác nhận
     public function confirm($id)
     {
-        $rental = Rental::findOrFail($id);
+        $user = request()->user();
+        if ($user->role_id != 1) {
+            return response()->json(['message' => 'Không có quyền'], 403);
+        }
 
-        if ($rental->status != 0) {
+        $rental = Rental::findOrFail($id);
+        if ($rental->status !== 'pending'){
             return response()->json([
                 'message' => 'Không hợp lệ'
             ], 400);
@@ -147,7 +190,8 @@ class RentalController extends Controller
     {
         $rental = Rental::findOrFail($id);
 
-        if ($rental->status != 0) {
+        // chỉ reject khi pending
+        if ($rental->status !== 'pending') {
             return response()->json([
                 'message' => 'Không hợp lệ'
             ], 400);
@@ -158,7 +202,55 @@ class RentalController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Đã từ chối'
+            'message' => 'Admin đã từ chối đơn'
+        ]);
+    }
+
+    public function start($id)
+    {
+        $rental = Rental::findOrFail($id);
+    
+        if ($rental->status !== 'confirmed') {
+            return response()->json([
+                'message' => 'Chỉ có thể bắt đầu khi đã xác nhận'
+            ], 400);
+        }
+    
+        $rental->update([
+            'status' => 2
+        ]);
+    
+        //  update vehicle
+        $rental->vehicle->update([
+            'status' => 1 // đang được thuê
+        ]);
+    
+        return response()->json([
+            'message' => 'Đã bắt đầu thuê (renting)'
+        ]);
+    }
+
+    public function complete($id)
+    {
+        $rental = Rental::findOrFail($id);
+
+        if ($rental->status !== 'renting') {
+            return response()->json([
+                'message' => 'Chỉ có thể hoàn thành khi đang thuê'
+            ], 400);
+        }
+
+        $rental->update([
+            'status' => 3
+        ]);
+
+        // 🔥 trả xe về available
+        $rental->vehicle->update([
+            'status' => 0
+        ]);
+
+        return response()->json([
+            'message' => 'Đã hoàn thành đơn thuê'
         ]);
     }
 }

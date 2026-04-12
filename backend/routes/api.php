@@ -17,11 +17,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rentals/my', [RentalController::class, 'myRentals']);
     Route::get('/rentals/{id}', [RentalController::class, 'show']);
     Route::patch('/rentals/{id}/cancel', [RentalController::class, 'cancel']);
+    
 
     // Admin
     Route::get('/admin/rentals', [RentalController::class, 'index']);
     Route::patch('/admin/rentals/{id}/confirm', [RentalController::class, 'confirm']);
     Route::patch('/admin/rentals/{id}/reject', [RentalController::class, 'reject']);
+    Route::patch('/admin/rentals/{id}/start', [RentalController::class, 'start']); //bắt đầu thuê
+    Route::patch('/admin/rentals/{id}/complete', [RentalController::class, 'complete']);
 });
 
 //Vehicle
