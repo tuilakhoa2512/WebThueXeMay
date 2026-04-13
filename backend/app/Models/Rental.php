@@ -43,7 +43,6 @@ class Rental extends Model
         return $this->hasOne(Payment::class);
     }
 
-    // 🔥 CHỈ 1 STATUS
     public function getStatusAttribute($value)
     {
         $statuses = [

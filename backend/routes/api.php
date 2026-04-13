@@ -10,6 +10,14 @@ Route::post('/login', [AuthController::class, 'login']);
 //Register
 Route::post('/register', [AuthController::class, 'register']);
 
+//Profile
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/profile/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
+});
+
 //Rental
 Route::middleware('auth:sanctum')->group(function () {
     // User

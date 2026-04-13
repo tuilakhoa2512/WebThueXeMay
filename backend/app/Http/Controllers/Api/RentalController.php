@@ -244,7 +244,7 @@ class RentalController extends Controller
             'status' => 3
         ]);
 
-        // 🔥 trả xe về available
+        // trả xe về available
         $rental->vehicle->update([
             'status' => 0
         ]);
