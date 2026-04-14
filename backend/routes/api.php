@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RentalController;
@@ -26,7 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rentals/{id}', [RentalController::class, 'show']);
     Route::patch('/rentals/{id}/cancel', [RentalController::class, 'cancel']);
     
-
     // Admin
     Route::get('/admin/rentals', [RentalController::class, 'index']);
     Route::patch('/admin/rentals/{id}/confirm', [RentalController::class, 'confirm']);
@@ -38,9 +38,21 @@ Route::middleware('auth:sanctum')->group(function () {
 //Vehicle
 Route::get('/vehicles', [VehicleController::class, 'index']);
 Route::get('/vehicles/{id}', [VehicleController::class, 'show']);
+
 // login
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles', [VehicleController::class, 'store']);
     Route::put('/vehicles/{id}', [VehicleController::class, 'update']);
     Route::delete('/vehicles/{id}', [VehicleController::class, 'destroy']);
 });
+
+//Payment
+Route::middleware('auth:sanctum')->group(function () {
+    //Tiền mặt
+    Route::post('/payments/cash', [PaymentController::class, 'cashPayment']);
+    //VNPAY
+    Route::get('/vnpay/create/{rental_id}', [PaymentController::class, 'createVnpay']);
+});
+// callback
+Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn']);
+Route::get('/vnpay/ipn', [PaymentController::class, 'ipn']);
