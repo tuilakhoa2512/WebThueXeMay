@@ -109,21 +109,21 @@ class VehicleController extends Controller
     $vehicle = Vehicle::findOrFail($id);
 
     $request->validate([
-        'name' => 'required|string|max:255',
-        'category_id' => 'required|exists:categories,id',
-        'brand_id' => 'required|exists:brands,id',
-        'license_plate' => 'required|unique:vehicles,license_plate,' . $id,
-        'price_per_day' => 'required|numeric|min:0'
+        'name' => 'sometimes|string|max:255',
+        'category_id' => 'sometimes|exists:categories,id',
+        'brand_id' => 'sometimes|exists:brands,id',
+        'license_plate' => 'sometimes|unique:vehicles,license_plate,' . $id,
+        'price_per_day' => 'sometimes|numeric|min:0'
     ]);
 
-    $vehicle->update([
-        'name' => $request->name,
-        'description' => $request->description,
-        'category_id' => $request->category_id,
-        'brand_id' => $request->brand_id,
-        'license_plate' => $request->license_plate,
-        'price_per_day' => $request->price_per_day,
-    ]);
+    $vehicle->update($request->only([
+        'name',
+        'description',
+        'category_id',
+        'brand_id',
+        'license_plate',
+        'price_per_day'
+    ]));
 
     return response()->json([
         'message' => 'Cập nhật thành công',
@@ -142,7 +142,7 @@ class VehicleController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Đã xóa xe'
+            'message' => 'Đã ẩn xe'
         ]);
     }
 }

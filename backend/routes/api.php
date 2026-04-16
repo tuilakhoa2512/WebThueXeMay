@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,11 @@ Route::get('/vehicles', [VehicleController::class, 'index']);
 
 //Login
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+
+//logout
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
 //Register
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -56,3 +62,8 @@ Route::middleware('auth:sanctum')->group(function () {
 // callback
 Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn']);
 Route::get('/vnpay/ipn', [PaymentController::class, 'ipn']);
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+});
