@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 use Illuminate\Support\Facades\DB;
+use App\Models\Notification;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Rental;
@@ -68,7 +69,12 @@ class RentalController extends Controller
             ]);
     
             DB::commit();
-    
+            
+            Notification::create([
+                'user_id' => $user->id,
+                'content' => 'Bạn đã tạo đơn thuê xe #' . $rental->id,
+                'is_read' => 0
+            ]);
             // load lại sau khi đã thêm đơn
             $rental->load(['vehicle']);
     

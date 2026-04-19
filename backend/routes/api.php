@@ -3,6 +3,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RentalController;
 use App\Http\Controllers\Api\AuthController;
 Route::get('/vehicles', [VehicleController::class, 'index']);
@@ -50,6 +51,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles', [VehicleController::class, 'store']);
     Route::put('/vehicles/{id}', [VehicleController::class, 'update']);
     Route::delete('/vehicles/{id}', [VehicleController::class, 'destroy']);
+});
+
+//Notifications
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });
 
 //Payment
