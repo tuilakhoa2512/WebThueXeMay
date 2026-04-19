@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });
 
+//Verification code OTP
+Route::post('/otp/send', [OtpController::class, 'sendOtp']);
+Route::post('/otp/verify', [OtpController::class, 'verifyOtp']);
+Route::post('/otp/reset-password', [OtpController::class, 'resetPassword']);
+
 //Payment
 Route::middleware('auth:sanctum')->group(function () {
     //Tiền mặt
@@ -75,3 +81,4 @@ Route::get('/vnpay/ipn', [PaymentController::class, 'ipn']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
 });
+
