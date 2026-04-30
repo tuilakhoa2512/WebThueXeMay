@@ -63,3 +63,10 @@ Khoa: Mật khẩu admin là :123456
     return response()->json($vehicles);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Khoa:
+Đã thêm route, thêm code vào VehicleController để lọc và kiểm tra xe trống theo ngày
+đã xuất ra thành: khi xe có status là 0 (xe đang trống) và "is_available" là true (có thể đặt)
+                và ngược lại status là 1 (xe đang thuê) và "is_available" là false (ko thể đặt)
+                và khi chạy chức năng xe trống theo ngày thì chỉ còn hiện là "is_available" là true

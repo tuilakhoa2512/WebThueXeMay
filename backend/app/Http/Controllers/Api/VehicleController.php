@@ -145,4 +145,65 @@ class VehicleController extends Controller
             'message' => 'Đã ẩn xe'
         ]);
     }
+
+    public function available(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after:start_date',
+        ]);
+
+        $query = Vehicle::with(['brand', 'category', 'images'])
+            ->where('status', '!=', 3); // bỏ xe ẩn
+
+        // ===== FILTER CƠ BẢN =====
+        if ($request->keyword) {
+            $query->where('name', 'like', '%' . $request->keyword . '%');
+        }
+
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->brand_id) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        $start = $request->start_date;
+        $end   = $request->end_date;
+
+        // ===== CASE 1: KHÔNG CÓ NGÀY =====
+        if (empty($start) || empty($end)) {
+
+            // chỉ lấy status 0,1
+            $query->whereIn('status', [0, 1]);
+
+            $vehicles = $query->latest()->get();
+
+            $vehicles->each(function ($v) {
+                $v->is_available = ($v->status === 0);
+            });
+
+            return response()->json($vehicles);
+        }
+
+        // ===== CASE 2: CÓ NGÀY =====
+        // điều kiện 1: status 0,1
+        $query->whereIn('status', [0, 1]);
+
+        // điều kiện 2: không có rental trùng
+        $query->whereDoesntHave('rentals', function ($q) use ($start, $end) {
+            $q->where('start_date', '<', $end)
+            ->where('end_date',   '>', $start);
+        });
+
+        $vehicles = $query->latest()->get();
+
+        // đã lọc xong => đều trống
+        $vehicles->each(function ($v) {
+            $v->is_available = true;
+        });
+
+        return response()->json($vehicles);
+    }
 }

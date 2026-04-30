@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //Vehicle
 Route::get('/vehicles', [VehicleController::class, 'index']);
+Route::get('/vehicles/available', [VehicleController::class, 'available']);//check xe trống theo ngày
 Route::get('/vehicles/{id}', [VehicleController::class, 'show']);
 
 // login
@@ -52,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles', [VehicleController::class, 'store']);
     Route::put('/vehicles/{id}', [VehicleController::class, 'update']);
     Route::delete('/vehicles/{id}', [VehicleController::class, 'destroy']);
+    
 });
 
 //Notifications
