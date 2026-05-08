@@ -91,17 +91,17 @@ const MainLayout = () => {
 
   // ===== LOGOUT =====
   const handleLogout = () => {
-  logout();
+    logout();
 
-  setMenuOpen(false);
-  setNotiOpen(false);
+    setMenuOpen(false);
+    setNotiOpen(false);
 
-  // về trang chủ
-  navigate('/');
+    // về trang chủ
+    navigate('/');
 
-  // reload lại homepage
-  window.location.reload();
-};
+    // reload lại homepage
+    window.location.reload();
+  };
 
   return (
     <div style={s.app}>
@@ -127,7 +127,7 @@ const MainLayout = () => {
             <Link to="/review" style={{ ...s.link, ...(currentPath === '/bang-gia' ? s.activeLink : {}) }}>
               Đánh giá
             </Link>
-           
+
 
             {isAuthenticated && (
               <Link
@@ -138,6 +138,17 @@ const MainLayout = () => {
                 }}
               >
                 LỊCH SỬ
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                to="/don-thue"
+                style={{
+                  ...s.link,
+                  ...(currentPath.startsWith('/don-thue') ? s.activeLink : {})
+                }}
+              >
+                HỒ SƠ
               </Link>
             )}
           </div>

@@ -8,11 +8,11 @@ import DanhSachXe from '../pages/DanhSachXe.jsx';
 import GioiThieu from '../pages/GioiThieu';
 import LienHe from '../pages/LienHe';
 import ChiTietXe from '../pages/ChiTietXe.jsx';
-import DangNhap from '../pages/DangNhap'; 
+import DangNhap from '../pages/DangNhap';
 import ThanhToan from '../pages/ThanhToan';
 import DonThue from '../pages/DonThue.jsx';
 import ChiTietDonThue from '../pages/ChiTietDonThue.jsx';
-
+import QuenMatKhau from "../pages/QuenMatKhau";
 
 // Admin Pages
 // import AdminLayout from '../admin/components/Layout.jsx';
@@ -31,6 +31,7 @@ const AppRouter = () => {
         <Route index element={<TrangChu />} />
         <Route path="/" element={<TrangChu />} />
         <Route path="/vehicle" element={<DanhSachXe />} />
+        <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
         <Route path="/vehicle/:id" element={<ChiTietXe />} />
         <Route path="/gioi-thieu" element={<GioiThieu />} />
         <Route path="/lien-he" element={<LienHe />} />
@@ -39,6 +40,7 @@ const AppRouter = () => {
         <Route path="/don-thue" element={<DonThue />} />
         <Route path="/don-thue/:id" element={<ChiTietDonThue />} />
         <Route path="*" element={<TrangChu />} />
+     
       </Route>
       {/* <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />

@@ -120,37 +120,53 @@ export const doimatkhau = async (data) => {
 // ==================== OTP ====================
 
 // POST /api/otp/send
+
+// POST /api/otp/send
 export const guiOtp = async (data) => {
+
   const response = await fetch(`${API_URL}/otp/send`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
     body: JSON.stringify(data),
-    // data gồm: { email }
   });
+
   return handleResponse(response);
 };
 
 // POST /api/otp/verify
 export const xacthucOtp = async (data) => {
+
   const response = await fetch(`${API_URL}/otp/verify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
     body: JSON.stringify(data),
-    // data gồm: { email, otp_code }
   });
+
   return handleResponse(response);
 };
 
 // POST /api/otp/reset-password
 export const datlaimatkhau = async (data) => {
+
   const response = await fetch(`${API_URL}/otp/reset-password`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
     body: JSON.stringify(data),
-    // data gồm: { email, otp_code, password, password_confirmation }
   });
+
   return handleResponse(response);
 };
+
+
 // ==================== NOTIFICATION ====================
 
 // GET /api/notifications
