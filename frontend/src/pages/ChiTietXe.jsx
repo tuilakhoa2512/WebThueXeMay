@@ -1,6 +1,7 @@
 // File: src/pages/ChiTietXe.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { API_URL } from '../apiConfig';
 import { useVehicle } from '../context/VehicleContext';
 
 const ChiTietXe = () => {
@@ -15,23 +16,20 @@ const ChiTietXe = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imgError, setImgError] = useState(false);
 
-  // Đọc ngày từ URL
   const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
   const [endDate, setEndDate] = useState(searchParams.get('end_date') || '');
-
-  // Trạng thái availability được tính lại khi đổi ngày
-  const [isAvailable, setIsAvailable] = useState(null); // null = chưa biết
-
+  const [isAvailable, setIsAvailable] = useState(null);
   const [booking, setBooking] = useState({ loading: false, error: '', success: false });
+
+  // ===== MỚI: phương thức thanh toán =====
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'transfer'
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Load xe khi mount lần đầu (với ngày từ URL nếu có)
   useEffect(() => {
     fetchVehicle(startDate, endDate);
   }, [id]);
 
-  // Re-check availability khi người dùng đổi ngày trên trang này
   useEffect(() => {
     if (!vehicle) return;
     checkAvailability(startDate, endDate);
@@ -41,12 +39,9 @@ const ChiTietXe = () => {
     setLoading(true);
     setError('');
     try {
-      const data = await loadVehicleById(id); // ❗ bỏ truyền ngày
+      const data = await loadVehicleById(id);
       if (!data) throw new Error('Không tìm thấy xe');
-
       setVehicle(data);
-
-      // ❗ KHÔNG dùng data.is_available nữa
       if (sd && ed) {
         await checkAvailability(sd, ed, data.id);
       } else {
@@ -61,25 +56,16 @@ const ChiTietXe = () => {
     }
   };
 
-  // Gọi API riêng để check availability khi đổi ngày (không reload toàn bộ xe)
   const checkAvailability = async (sd, ed) => {
     if (!sd || !ed) {
-      // Không có ngày => dùng status gốc
       setIsAvailable(vehicle?.status === 0);
       return;
     }
     try {
-      const query = new URLSearchParams({
-        start_date: sd,
-        end_date: ed
-      });
-
+      const query = new URLSearchParams({ start_date: sd, end_date: ed });
       const res = await fetch(`http://127.0.0.1:8000/api/vehicles/available?${query.toString()}`);
       const data = await res.json();
-
-      // 🔥 tìm xe hiện tại trong danh sách available
       const found = data.find(v => v.id == id);
-
       setIsAvailable(!!found);
     } catch {
       // giữ nguyên giá trị cũ nếu lỗi
@@ -96,30 +82,33 @@ const ChiTietXe = () => {
   const formatPrice = (price) =>
     price != null ? `${Number(price).toLocaleString('vi-VN')} đ` : 'Liên hệ';
 
-  // ===== GIỮ NGUYÊN TOÀN BỘ CODE CỦA BẠN =====
-  // chỉ thay thế phần handleBooking
-
   const handleBooking = async () => {
     if (!startDate || !endDate) {
-      setBooking((b) => ({
-        ...b,
-        error: 'Vui lòng chọn ngày bắt đầu và ngày kết thúc.'
-      }));
+      setBooking(b => ({ ...b, error: 'Vui lòng chọn ngày bắt đầu và ngày kết thúc.' }));
       return;
     }
-
     if (days <= 0) {
-      setBooking((b) => ({
-        ...b,
-        error: 'Ngày kết thúc phải sau ngày bắt đầu.'
-      }));
+      setBooking(b => ({ ...b, error: 'Ngày kết thúc phải sau ngày bắt đầu.' }));
       return;
     }
 
-    try {
-      setBooking((b) => ({ ...b, loading: true, error: '' }));
+    // ===== CHUYỂN KHOẢN: chuyển sang trang QR =====
+    if (paymentMethod === 'transfer') {
+      navigate('/thanh-toan-qr', {
+        state: {
+          vehicle,
+          startDate,
+          endDate,
+          days,
+          total,
+        }
+      });
+      return;
+    }
 
-      // ✅ GỌI API TẠO RENTAL (BE sẽ check overlap)
+    // ===== TIỀN MẶT: tạo đơn thuê luôn =====
+    try {
+      setBooking(b => ({ ...b, loading: true, error: '' }));
       const res = await fetch(`${API_URL}/rentals`, {
         method: 'POST',
         headers: {
@@ -129,35 +118,20 @@ const ChiTietXe = () => {
         body: JSON.stringify({
           vehicle_id: vehicle.id,
           start_date: startDate,
-          end_date: endDate
+          end_date: endDate,
+          payment_method: 'cash',
         })
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        // ✅ HIỂN THỊ LỖI TỪ BACKEND
-        setBooking((b) => ({
-          ...b,
-          error: data.message || 'Không thể đặt xe'
-        }));
+        setBooking(b => ({ ...b, error: data.message || 'Không thể đặt xe' }));
         return;
       }
-
-      // ✅ SUCCESS
-      setBooking((b) => ({
-        ...b,
-        success: 'Đặt xe thành công!',
-        error: ''
-      }));
-
-    } catch (err) {
-      setBooking((b) => ({
-        ...b,
-        error: 'Lỗi kết nối server'
-      }));
+      setBooking(b => ({ ...b, success: 'Đặt xe thành công!', error: '' }));
+    } catch {
+      setBooking(b => ({ ...b, error: 'Lỗi kết nối server' }));
     } finally {
-      setBooking((b) => ({ ...b, loading: false }));
+      setBooking(b => ({ ...b, loading: false }));
     }
   };
 
@@ -169,7 +143,6 @@ const ChiTietXe = () => {
     navigate(`/xe${qs ? `?${qs}` : ''}`);
   };
 
-  // ===== LOADING / ERROR =====
   if (loading) return (
     <div style={st.fullCenter}>
       <div style={st.spinner} />
@@ -190,13 +163,8 @@ const ChiTietXe = () => {
   );
 
   const { name, license_plate, price_per_day, description, category, brand, images = [] } = vehicle;
-  // Ưu tiên isAvailable (state cập nhật theo ngày), fallback về vehicle.is_available
   const avail = isAvailable !== null ? isAvailable : vehicle.is_available;
-
-  const displayImage =
-    (!imgError && selectedImage) ||
-    'https://placehold.co/700x480/1e3a5f/FFF?text=Chua+Co+Anh';
-
+  const displayImage = (!imgError && selectedImage) || 'https://placehold.co/700x480/1e3a5f/FFF?text=Chua+Co+Anh';
   const hasDateFilter = !!(startDate && endDate && days > 0);
 
   return (
@@ -221,7 +189,6 @@ const ChiTietXe = () => {
                 style={st.mainImg}
                 onError={() => setImgError(true)}
               />
-              {/* Availability overlay */}
               {!avail && (
                 <div style={st.unavailOverlay}>
                   <span style={st.unavailText}>Hết xe</span>
@@ -235,10 +202,7 @@ const ChiTietXe = () => {
                     key={img.id}
                     src={img.url}
                     alt={name}
-                    style={{
-                      ...st.thumb,
-                      ...(selectedImage === img.url ? st.thumbActive : {}),
-                    }}
+                    style={{ ...st.thumb, ...(selectedImage === img.url ? st.thumbActive : {}) }}
                     onClick={() => { setSelectedImage(img.url); setImgError(false); }}
                     onError={(e) => { e.target.src = 'https://placehold.co/100x100/1e3a5f/FFF?text=Loi'; }}
                   />
@@ -250,7 +214,6 @@ const ChiTietXe = () => {
           {/* ===== CỘT THÔNG TIN ===== */}
           <div style={st.infoCol}>
 
-            {/* Tags */}
             <div style={st.tagRow}>
               {brand?.name && <span style={st.tag}>{brand.name}</span>}
               {category?.name && <span style={{ ...st.tag, ...st.tagBlue }}>{category.name}</span>}
@@ -318,7 +281,6 @@ const ChiTietXe = () => {
                 </div>
               </div>
 
-              {/* Tóm tắt chi phí */}
               {hasDateFilter && (
                 <div style={st.summary}>
                   <span style={st.summaryLeft}>
@@ -328,7 +290,31 @@ const ChiTietXe = () => {
                 </div>
               )}
 
-              {/* Cảnh báo xe không còn trống — hiện TRƯỚC khi bấm */}
+              {/* ===== MỚI: CHỌN PHƯƠNG THỨC THANH TOÁN ===== */}
+              <div>
+                <div style={st.payLabel}>💳 Phương thức thanh toán</div>
+                <div style={st.payMethodRow}>
+                  <div
+                    style={{ ...st.payCard, ...(paymentMethod === 'cash' ? st.payCardActive : {}) }}
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    <div style={st.payIcon}>💵</div>
+                    <div style={st.payName}>Tiền mặt</div>
+                    <div style={st.payDesc}>Thanh toán khi nhận xe</div>
+                    <div style={{ ...st.payRadio, ...(paymentMethod === 'cash' ? st.payRadioActive : {}) }} />
+                  </div>
+                  <div
+                    style={{ ...st.payCard, ...(paymentMethod === 'transfer' ? st.payCardActive : {}) }}
+                    onClick={() => setPaymentMethod('transfer')}
+                  >
+                    <div style={st.payIcon}>🏦</div>
+                    <div style={st.payName}>Chuyển khoản</div>
+                    <div style={st.payDesc}>Quét mã QR ngân hàng</div>
+                    <div style={{ ...st.payRadio, ...(paymentMethod === 'transfer' ? st.payRadioActive : {}) }} />
+                  </div>
+                </div>
+              </div>
+
               {hasDateFilter && !avail && (
                 <div style={st.alertUnavail}>
                   ⚠️ <strong>Xe đã được đặt</strong> trong khoảng thời gian này. Vui lòng chọn ngày khác.
@@ -355,6 +341,7 @@ const ChiTietXe = () => {
                   style={{
                     ...st.rentBtn,
                     ...(!avail || booking.loading || !hasDateFilter ? st.rentBtnDisabled : {}),
+                    ...(paymentMethod === 'transfer' && avail && hasDateFilter ? st.rentBtnTransfer : {}),
                   }}
                 >
                   {booking.loading
@@ -363,7 +350,9 @@ const ChiTietXe = () => {
                       ? '✗ Hết xe trong thời gian này'
                       : !hasDateFilter
                         ? 'Chọn ngày để đặt xe'
-                        : '🚘 THUÊ XE NGAY'}
+                        : paymentMethod === 'transfer'
+                          ? '🏦 Tiếp tục thanh toán QR'
+                          : '🚘 THUÊ XE NGAY'}
                 </button>
                 <button onClick={handleBack} style={st.backBtn}>
                   ← Quay lại
@@ -373,11 +362,10 @@ const ChiTietXe = () => {
           </div>
         </div>
 
-        {/* ===== THÔNG TIN CHI TIẾT (phần dưới) ===== */}
+        {/* ===== THÔNG TIN CHI TIẾT ===== */}
         <div style={st.detailSection}>
           <h2 style={st.detailTitle}>Thông tin xe</h2>
           <div style={st.detailGrid}>
-
             <div style={st.detailCard}>
               <h3 style={st.detailCardTitle}>📋 Thông số</h3>
               <table style={st.specTable}>
@@ -421,7 +409,6 @@ const ChiTietXe = () => {
               <p style={st.descTxt}>
                 {description || 'Thông tin mô tả xe đang được cập nhật từ cơ sở dữ liệu.'}
               </p>
-
               {hasDateFilter && (
                 <div style={st.rentalSummaryBox}>
                   <div style={st.rentalSummaryTitle}>🗒️ Tóm tắt thuê xe</div>
@@ -432,6 +419,10 @@ const ChiTietXe = () => {
                   <div style={st.rentalRow}>
                     <span>Ngày trả:</span>
                     <strong>{new Date(endDate).toLocaleDateString('vi-VN')}</strong>
+                  </div>
+                  <div style={st.rentalRow}>
+                    <span>Phương thức:</span>
+                    <strong>{paymentMethod === 'cash' ? '💵 Tiền mặt' : '🏦 Chuyển khoản'}</strong>
                   </div>
                   <div style={{ ...st.rentalRow, ...st.rentalTotalRow }}>
                     <span>Tổng dự kiến ({days} ngày):</span>
@@ -448,7 +439,6 @@ const ChiTietXe = () => {
 };
 
 const st = {
-  /* Full-page states */
   fullCenter: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' },
   spinner: { width: '44px', height: '44px', border: '4px solid #e5e7eb', borderTop: '4px solid #1e3a5f', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   loadingTxt: { color: '#6b7280', fontSize: '16px' },
@@ -456,18 +446,14 @@ const st = {
 
   page: { minHeight: '100vh', backgroundColor: '#f4f6fb', fontFamily: "'Segoe UI', sans-serif" },
 
-  /* Breadcrumb */
   breadcrumb: { background: '#fff', borderBottom: '1px solid #eaeff6', padding: '14px 40px', display: 'flex', alignItems: 'center', gap: '10px' },
   breadLink: { fontSize: '14px', color: '#1e3a5f', cursor: 'pointer', fontWeight: 600 },
   breadSep: { color: '#cbd5e1', fontSize: '14px' },
   breadCurrent: { fontSize: '14px', color: '#94a3b8' },
 
   container: { maxWidth: '1200px', margin: '0 auto', padding: '36px 24px 60px' },
-
-  /* Top grid */
   topGrid: { display: 'flex', flexWrap: 'wrap', gap: '48px', marginBottom: '56px' },
 
-  /* Image column */
   imageCol: { flex: '1 1 440px' },
   mainImgWrap: { position: 'relative', borderRadius: '14px', overflow: 'hidden', border: '1px solid #eaeff6', marginBottom: '12px', backgroundColor: '#f1f4f9' },
   mainImg: { width: '100%', maxHeight: '440px', objectFit: 'cover', display: 'block' },
@@ -477,7 +463,6 @@ const st = {
   thumb: { width: '80px', height: '70px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #e2e8f0', cursor: 'pointer' },
   thumbActive: { borderColor: '#1e3a5f', boxShadow: '0 0 0 2px #93c5fd' },
 
-  /* Info column */
   infoCol: { flex: '1 1 400px', display: 'flex', flexDirection: 'column' },
   tagRow: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' },
   tag: { padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, background: '#f1f5f9', color: '#475569' },
@@ -493,7 +478,6 @@ const st = {
   price: { fontSize: '36px', fontWeight: 800, color: '#1e3a5f' },
   priceSub: { fontSize: '16px', color: '#94a3b8', fontWeight: 400 },
 
-  /* Booking box */
   bookingBox: { background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px' },
   bookingTitle: { fontSize: '15px', fontWeight: 700, color: '#374151' },
   prefillNote: { padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', fontSize: '13px', color: '#1d4ed8', fontWeight: 500 },
@@ -505,16 +489,31 @@ const st = {
   summaryLeft: { color: '#374151' },
   summaryTotal: { fontSize: '18px', color: '#1e3a5f' },
 
-  alertUnavail: { padding: '12px 16px', background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: '10px', fontSize: '14px', color: '#b91c1c', lineHeight: 1.5 },
+  // ===== MỚI: payment method styles =====
+  payLabel: { fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.4px' },
+  payMethodRow: { display: 'flex', gap: '10px' },
+  payCard: {
+    flex: 1, position: 'relative', padding: '14px 12px', border: '2px solid #e2e8f0',
+    borderRadius: '12px', cursor: 'pointer', background: '#fff',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+    transition: 'all 0.18s', userSelect: 'none',
+  },
+  payCardActive: { borderColor: '#1e3a5f', background: '#eff6ff', boxShadow: '0 0 0 3px #bfdbfe55' },
+  payIcon: { fontSize: '24px' },
+  payName: { fontSize: '13px', fontWeight: 700, color: '#1e293b' },
+  payDesc: { fontSize: '11px', color: '#94a3b8', textAlign: 'center' },
+  payRadio: { width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #cbd5e1', marginTop: '6px', transition: 'all 0.18s' },
+  payRadioActive: { border: '4px solid #1e3a5f', background: '#fff' },
 
+  alertUnavail: { padding: '12px 16px', background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: '10px', fontSize: '14px', color: '#b91c1c', lineHeight: 1.5 },
   msgError: { color: '#dc2626', fontSize: '14px', margin: 0 },
   msgSuccess: { color: '#15803d', fontSize: '14px', margin: 0 },
   actions: { display: 'flex', gap: '12px', flexWrap: 'wrap' },
   rentBtn: { flex: 1, minWidth: '160px', padding: '14px 20px', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' },
   rentBtnDisabled: { background: '#cbd5e1', cursor: 'not-allowed', color: '#64748b' },
+  rentBtnTransfer: { background: '#0369a1' },
   backBtn: { padding: '14px 24px', background: '#fff', color: '#1e3a5f', border: '2px solid #1e3a5f', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer' },
 
-  /* Detail section */
   detailSection: { borderTop: '1px solid #eaeff6', paddingTop: '40px' },
   detailTitle: { fontSize: '22px', fontWeight: 800, color: '#1e293b', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '0.5px' },
   detailGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' },
@@ -525,14 +524,12 @@ const st = {
   specKey: { padding: '10px 12px 10px 0', fontSize: '14px', color: '#6b7280', fontWeight: 600, width: '45%', verticalAlign: 'middle' },
   specVal: { padding: '10px 0', fontSize: '14px', color: '#1e293b', verticalAlign: 'middle' },
   descTxt: { fontSize: '15px', color: '#64748b', lineHeight: 1.75, margin: '0 0 20px 0' },
-
   rentalSummaryBox: { background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '16px' },
   rentalSummaryTitle: { fontSize: '14px', fontWeight: 700, color: '#92400e', marginBottom: '12px' },
   rentalRow: { display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#374151', marginBottom: '8px' },
   rentalTotalRow: { borderTop: '1px solid #fde68a', paddingTop: '10px', marginTop: '4px', fontWeight: 700 },
 };
 
-// Inject spinner keyframe
 if (typeof document !== 'undefined' && !document.getElementById('ctxe-styles')) {
   const style = document.createElement('style');
   style.id = 'ctxe-styles';

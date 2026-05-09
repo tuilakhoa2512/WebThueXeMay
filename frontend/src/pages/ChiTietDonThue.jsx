@@ -1,7 +1,7 @@
 // File: src/pages/ChiTietDonThue.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { huydonthuê, laydonthuebyid } from '../services/api';
+import { huydonthue, laydonthuebyid } from '../services/api';
 
 const ChiTietDonThue = () => {
   const { id } = useParams();

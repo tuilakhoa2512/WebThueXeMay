@@ -3,7 +3,9 @@ import { API_URL } from '../apiConfig.js';
 // ==================== HELPER ====================
 const getAuthHeaders = (isFormData = false) => {
   const token = localStorage.getItem('token');
-  const headers = {};
+  const headers = {
+    Accept: 'application/json'
+  };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -316,7 +318,7 @@ export const laydonthuebyid = async (id) => {
 };
 
 // POST /api/rentals/{id}/cancel
-export const huydonthuê = async (id) => {
+export const huydonthue = async (id) => {
   const response = await fetch(`${API_URL}/rentals/${id}/cancel`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -325,7 +327,7 @@ export const huydonthuê = async (id) => {
 };
 
 // GET /api/admin/rentals
-export const laytatcadonthuê = async () => {
+export const laytatcadonthue = async () => {
   const response = await fetch(`${API_URL}/admin/rentals`, {
     headers: getAuthHeaders(),
   });
@@ -368,6 +370,36 @@ export const hoantthanhdonthuê = async (id) => {
   return handleResponse(response);
 };
 
+// ==================== PAYMENTS ====================
+
+// POST /api/payments/cash — Xác nhận thanh toán tiền mặt / chuyển khoản
+// Body: { rental_id }
+export const thanhToanTienMat = async (rentalId) => {
+  const response = await fetch(`${API_URL}/payments/cash`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ rental_id: rentalId }),
+  });
+  return handleResponse(response);
+};
+
+// GET /api/payments/vnpay/:rental_id — Lấy link thanh toán VNPay
+export const layLinkVNPay = async (rentalId) => {
+
+  const response = await fetch(
+
+    `${API_URL}/vnpay/create/${rentalId}`,
+
+    {
+      method: 'GET',
+
+      headers: getAuthHeaders(),
+    }
+  );
+
+  return handleResponse(response);
+};
+
 // ==================== NOTIFICATION ====================
 
 // GET /api/notifications
@@ -394,3 +426,5 @@ export const demthongbaochuadoc = async () => {
   });
   return handleResponse(response);
 };
+export const taoRental = datxe;
+export const layRental = laydonthuebyid;
