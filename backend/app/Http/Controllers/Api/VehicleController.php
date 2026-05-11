@@ -175,8 +175,8 @@ class VehicleController extends Controller
         // ===== CASE 1: KHÔNG CÓ NGÀY =====
         if (empty($start) || empty($end)) {
 
-            // chỉ lấy status 0,1
-            $query->whereIn('status', [0, 1]);
+            // chỉ lấy status 0
+            $query->whereIn('status', [0]);
 
             $vehicles = $query->latest()->get();
 
@@ -188,8 +188,8 @@ class VehicleController extends Controller
         }
 
         // ===== CASE 2: CÓ NGÀY =====
-        // điều kiện 1: status 0,1
-        $query->whereIn('status', [0, 1]);
+        // điều kiện 1: status 0
+        $query->whereIn('status', [0]);
 
         // điều kiện 2: không có rental trùng
         $query->whereDoesntHave('rentals', function ($q) use ($start, $end) {
