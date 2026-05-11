@@ -5,14 +5,17 @@ import MainLayout from '../layouts/MainLayout';
 import ChiTietDonThue from '../pages/ChiTietDonThue.jsx';
 import ChiTietXe from '../pages/ChiTietXe.jsx';
 import DangNhap from '../pages/DangNhap';
+import DanhGia from '../pages/DanhGia';
 import DanhSachXe from '../pages/DanhSachXe.jsx';
 import DonThue from '../pages/DonThue.jsx';
 import GioiThieu from '../pages/GioiThieu';
+import HoSo from '../pages/HoSo';
 import LienHe from '../pages/LienHe';
 import QuenMatKhau from "../pages/QuenMatKhau";
+import ReviewPage from '../pages/Review';
 import ThanhToan from '../pages/ThanhToan';
-import TrangChu from '../pages/TrangChu';
 import ThanhToanQR from '../pages/ThanhToanQR';
+import TrangChu from '../pages/TrangChu';
 // Admin Pages
 // import AdminLayout from '../admin/components/Layout.jsx';
 // import AdminDashboard from '../admin/pages/Dashboard.jsx';
@@ -40,6 +43,9 @@ const AppRouter = () => {
         <Route path="/don-thue/:id" element={<ChiTietDonThue />} />
         <Route path="*" element={<TrangChu />} />
         <Route path="/thanh-toan-qr" element={<ThanhToanQR />} />
+        <Route path="/ho-so" element={<HoSo />} />
+        <Route path="/danh-gia/:id" element={<DanhGia />} />
+        <Route path="/review" element={<ReviewPage />} />
       </Route>
       {/* <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />

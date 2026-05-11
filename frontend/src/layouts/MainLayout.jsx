@@ -124,7 +124,7 @@ const MainLayout = () => {
             <Link to="/vehicle" style={{ ...s.link, ...(currentPath.startsWith('/vehicle') ? s.activeLink : {}) }}>
               Xe
             </Link>
-            <Link to="/review" style={{ ...s.link, ...(currentPath === '/bang-gia' ? s.activeLink : {}) }}>
+            <Link to="/review" style={{ ...s.link, ...(currentPath === '/review' ? s.activeLink : {}) }}>
               Đánh giá
             </Link>
 
@@ -142,10 +142,10 @@ const MainLayout = () => {
             )}
             {isAuthenticated && (
               <Link
-                to="/don-thue"
+                to="/ho-so"
                 style={{
                   ...s.link,
-                  ...(currentPath.startsWith('/don-thue') ? s.activeLink : {})
+                  ...(currentPath.startsWith('/ho-so') ? s.activeLink : {})
                 }}
               >
                 HỒ SƠ

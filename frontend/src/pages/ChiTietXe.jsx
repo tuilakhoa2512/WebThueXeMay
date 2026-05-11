@@ -62,6 +62,7 @@ const ChiTietXe = () => {
       return;
     }
     try {
+      console.log(startDate, endDate);
       const query = new URLSearchParams({ start_date: sd, end_date: ed });
       const res = await fetch(`http://127.0.0.1:8000/api/vehicles/available?${query.toString()}`);
       const data = await res.json();
