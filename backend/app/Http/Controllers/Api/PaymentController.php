@@ -156,7 +156,46 @@ class PaymentController extends Controller
 
     public function vnpayReturn(Request $request)
     {
-        return $this->handleVnpay($request);
+        $vnp_HashSecret = env('VNP_HASH_SECRET');
+
+        $inputData = $request->all();
+
+        $vnp_SecureHash = $inputData['vnp_SecureHash'];
+        unset($inputData['vnp_SecureHash']);
+        unset($inputData['vnp_SecureHashType']);
+
+        ksort($inputData);
+
+        $hashData = urldecode(http_build_query($inputData));
+
+        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+        if ($secureHash === $vnp_SecureHash) {
+
+            if ($request->vnp_ResponseCode == '00') {
+
+                $payment = Payment::where('rental_id', $request->vnp_TxnRef)->first();
+
+                if ($payment) {
+
+                    $payment->update([
+                        'status' => 1,
+                        'transaction_code' => $request->vnp_TransactionNo
+                    ]);
+
+                    $payment->rental->update([
+                        'status' => 1
+                    ]);
+                }
+
+                // redirect frontend
+                return redirect('http://localhost:5173/payment-success?rental_id=' . $request->vnp_TxnRef);
+            }
+
+            return redirect('http://localhost:5173/payment-failed');
+        }
+
+        return redirect('http://localhost:5173/payment-error');
     }
 
     public function ipn(Request $request)

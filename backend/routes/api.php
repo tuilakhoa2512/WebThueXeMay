@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\VehicleController;
@@ -67,6 +68,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/otp/send', [OtpController::class, 'sendOtp']);
 Route::post('/otp/verify', [OtpController::class, 'verifyOtp']);
 Route::post('/otp/reset-password', [OtpController::class, 'resetPassword']);
+
+//Favorite
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/favorites/{vehicle_id}', [FavoriteController::class, 'toggle']);
+
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+});
 
 //Payment
 Route::middleware('auth:sanctum')->group(function () {
