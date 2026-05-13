@@ -16,6 +16,8 @@ import ReviewPage from '../pages/Review';
 import ThanhToan from '../pages/ThanhToan';
 import ThanhToanQR from '../pages/ThanhToanQR';
 import TrangChu from '../pages/TrangChu';
+import PaymentSuccess from "../pages/PaymentSuccess";
+import PaymentFailed  from "../pages/PaymentFailed";
 // Admin Pages
 // import AdminLayout from '../admin/components/Layout.jsx';
 // import AdminDashboard from '../admin/pages/Dashboard.jsx';
@@ -46,6 +48,9 @@ const AppRouter = () => {
         <Route path="/ho-so" element={<HoSo />} />
         <Route path="/danh-gia/:id" element={<DanhGia />} />
         <Route path="/review" element={<ReviewPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+<Route path="/payment-failed"  element={<PaymentFailed />} />
+<Route path="/payment-error"   element={<PaymentFailed />} />
       </Route>
       {/* <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
